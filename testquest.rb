@@ -25,7 +25,7 @@ class Locations
             @player.add_location_item("Piece of Glass")
             @player.set_location(0,0,0)
         else
-            # Player loaded and existing game
+            # Player loaded an existing game
             @player.screen "\nGame Loaded!\n\n"
         end
     end
