@@ -143,7 +143,7 @@ class Locations
         @player.set_location(0,2,0)
 
         if @player.check_inventory_item("Scrap of Paper")
-            @player.screen "You are just walking leasurely down the path and admiring how clean it is! You also see a path leading east."
+            @player.screen "You are just walking leasurely down the path and admiring how clean it is! You also see paths leading north, east and south."
             while true
                 case @player.show_menu ["1. Go north on the path","2. Go south on the path","3. Go east on the path", "4. Drop the scrap of paper"]
                 
@@ -170,7 +170,7 @@ class Locations
                 end
             end
         else
-            @player.screen "As you are walking down the path, you find a small scrap of paper on the ground. You also see a path leading east."
+            @player.screen "As you are walking down the path, you find a small scrap of paper on the ground. You also see paths leading north, east and south."
             while true
                 case @player.show_menu ["1. Pick up the paper","2. Go north on the path","3. Go south on the path","4. Go east on the path"]
                 
