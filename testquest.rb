@@ -1,9 +1,9 @@
 require './Adventure'
 
 class Locations
-#******************************
-#******* Required stuff *******
-#******************************
+#******************
+#* Required stuff *
+#******************
 
     # Intialization of the locations class at startup
     def initialize()
@@ -44,9 +44,9 @@ class Locations
         return @player.next_location
     end
 
-#****************************************************************************
-#******* Grid Locations - Function Name Format: location_x_y_z ******
-#****************************************************************************
+#*********************************************************
+#* Grid Locations - Function Name Format: location_x_y_z *
+#*********************************************************
 
     # Small dark room with a Safe
     def location_0_0_0
@@ -287,9 +287,9 @@ class Locations
 end
 
 
-#*************************************************
-# MAIN GAME LOOP                                 *
-#*************************************************
+#*****************
+# MAIN GAME LOOP *
+#*****************
 
 # Create a set of locations
 locations = Locations.new
