@@ -15,6 +15,7 @@ class Locations
         if @player.load
             # Set the initial game items and locations for a new game
             @player.screen "\nStarting New Game...\n\n"
+            @player.screen "Welcome to the land of Test! You are on a short mission to demonstrate the Adventure game library. Please feel free to roam and watch out for voids!\n"
             @player.set_location(0,0,0)
             @player.set_location_attribute("Light Switch","OFF")
             @player.add_location_item("Treasure from Safe")
