@@ -20,6 +20,8 @@ class Locations
             @player.add_location_item("Treasure from Safe")
             @player.set_location(0,2,0)
             @player.add_location_item("Scrap of Paper")
+            @player.set_location(1,2,0)
+            @player.add_location_item("Piece of Glass")
             @player.set_location(0,0,0)
         else
             # Player loaded and existing game
@@ -50,13 +52,15 @@ class Locations
         @player.set_location(0,0,0)
 
         if @player.get_location_attribute("Light Switch") == "OFF"
-            @player.screen "You have entered a small dark room. You see a light switch on the wall. There is something large and metal on the floor."
+            @player.screen "You are in a small dark room. You see a light switch on the wall. There is something large and metal on the floor."
+            obj = "2. Inspect the large metal object"
         else
-            @player.screen "You have entered a small brightly lit room. You see a light switch on the wall. There is a large safe on the floor."
+            @player.screen "You are in a small brightly lit room. You see a light switch on the wall. There is a large safe on the floor."
+            obj = "2. Inspect the safe"
         end
 
         while true
-            case @player.show_menu ["1. Flip light switch","2. Inspect the large metal object","3. Leave the room"]
+            case @player.show_menu ["1. Flip light switch","#{obj}","3. Leave the room"]
             
             when "quit"
                 save_game
@@ -66,14 +70,23 @@ class Locations
                 @player.set_location_attribute("Light Switch", @player.toggle(@player.get_location_attribute("Light Switch")))
                 if @player.get_location_attribute("Light Switch") == "ON" 
                     @player.screen "The light is on!"
+                    return @player.next_location
                 else
                     @player.screen "The light is off!"
+                    return @player.next_location
                 end
 
             when "2"
                 if @player.get_location_attribute("Light Switch") == "ON"
                     if @player.check_inventory_item("Scrap of Paper")
-                        @player.screen "Congratulations! The paper you picked up just happens to have the combination!"
+                        if @player.check_inventory_item("Piece of Glass")
+                            @player.screen "You are clever and used your small piece of glass like a magnifier to read the combination from the scrap of paper."
+                        else
+                            @player.screen "You have a small scrap of paper, but the print is too small to read."
+                            next
+                        end
+                        
+                        @player.screen "What would you like to do next?"
                         while true
                             case @player.show_menu ["1. Take the treasure","2. Leave the room"]
                             when "quit"
@@ -166,7 +179,7 @@ class Locations
                 
                 when "1"
                     @player.pickup_item("Scrap of Paper")
-                    @player.screen "You have picked up the scrap of paper."
+                    @player.screen "You have picked up the scrap of paper. The writing on it is too small to read, but you kept it anyways."
                     return @player.next_location
                 
                 when "2"
@@ -223,17 +236,38 @@ class Locations
      def location_1_2_0
         @player.set_location(1,2,0)
 
-        @player.screen "Are on a winding eastward path, but you must turn around because the path is filled with brush."
-        while true
-            case @player.show_menu ["1. Go west on the path"]
-            
-            when "quit"
-                save_game
-                return "Exit_Game"
-            
-            when "1"
-                @player.move_west
-                return @player.next_location
+        if @player.check_inventory_item("Piece of Glass")
+            @player.screen "You are on a winding eastward path, but you must turn around because the path is filled with brush."
+            while true
+                case @player.show_menu ["1. Go west on the path"]
+                
+                when "quit"
+                    save_game
+                    return "Exit_Game"
+                
+                when "1"
+                    @player.move_west
+                    return @player.next_location
+                end
+            end
+        else
+            @player.screen "You are on a winding eastward path, but you must turn around because the path is filled with brush. In the brush you small piece of clear glass."
+            while true
+                case @player.show_menu ["1. Go west on the path","2. Pick up the piece of glass"]
+                
+                when "quit"
+                    save_game
+                    return "Exit_Game"
+                
+                when "1"
+                    @player.move_west
+                    return @player.next_location
+
+                when "2"
+                    @player.pickup_item("Piece of Glass")
+                    @player.screen "You have picked up the small piece of glass. It looks like a lens of some sorts."
+                    return @player.next_location
+                end
             end
         end
     end   
