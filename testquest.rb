@@ -226,8 +226,21 @@ class Locations
     def location_0_4_0
         @player.set_location(0,4,0)
 
-        @player.screen "You have fallen off the map into the Great Blue Void!"
-        return "Exit_Game" if @player.remove_lives(1)
+        @player.remove_lives(1)
+
+        @player.screen "You have fallen off the map into the Great Blue Void and lost your life! You are now starting over and have #{@player.get_lives} lives left."
+        @player.set_location(0,0,0)
+        @player.set_location_attribute("Light Switch","OFF")
+        @player.add_location_item("Treasure from Safe")
+        @player.set_location(0,2,0)
+        @player.add_location_item("Scrap of Paper")
+        @player.remove_inventory_item("Scrap of Paper")
+        @player.set_location(1,2,0)
+        @player.add_location_item("Piece of Glass")
+        @player.remove_inventory_item("Piece of Glass")
+        @player.set_location(0,0,0)
+        
+        return "Exit_Game" if @player.get_lives == 0
 
         @player.set_location(0,1,0)
         return @player.next_location
