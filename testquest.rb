@@ -242,7 +242,6 @@ class Locations
         
         return "Exit_Game" if @player.get_lives == 0
 
-        @player.set_location(0,1,0)
         return @player.next_location
     end
 
