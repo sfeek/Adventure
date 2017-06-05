@@ -6,46 +6,51 @@ require 'io/console'
 
 
 # Global Constants
-MAX_HEALTH = 100
-MAX_LIVES = 3
 MAX_INVENTORY = 10
+MAX_NPC = 10
 GRID_SIZE_X = 10
 GRID_SIZE_Y = 10
 GRID_SIZE_Z = 1
 
 # Class to Keep track of the current location information
-class Player
+class Game
     
     # Initialize class
     def initialize()
         @x = 0
         @y = 0
         @z = 0
-        @health = MAX_HEALTH
-        @lives = MAX_LIVES
-        @score = 0
         @user_name = ""
-        @inventory = Array.new()
-        @player_attributes = Array.new()
+        @npc = Array.new(MAX_NPC)
         @location_items = Array.new(GRID_SIZE_X) {Array.new(GRID_SIZE_Y) {Array.new(GRID_SIZE_Z)}}
         @location_attributes = Array.new(GRID_SIZE_X) {Array.new(GRID_SIZE_Y) {Array.new(GRID_SIZE_Z)}}
+        @location_npcs = Array.new(GRID_SIZE_X) {Array.new(GRID_SIZE_Y) {Array.new(GRID_SIZE_Z)}}
+        @player_attributes = Hash.new()
+        @npc_attributes = Hash.new()
+        @inventory = Hash.new()
     end
 
     # Save player status to disk
     def save()
         begin
-            File.open(@user_name, "w") do |file|
+            File.open("#{@user_name}_game.save", "wb") do |file|
                 file.puts @x
                 file.puts @y
                 file.puts @z
-                file.puts @health
-                file.puts @lives
-                file.puts @score
                 file.puts @user_name
-                file.puts Marshal.dump(@inventory)
                 file.puts Marshal.dump(@location_items)
                 file.puts Marshal.dump(@location_attributes)
-                file.puts Marshal.dump(@player_attributes)
+                file.puts Marshal.dump(@location_npcs)
+                file.puts Marshal.dump(@npc)
+            end
+            File.open("#{@user_name}_player.save", "wb") do |file|
+                Marshal.dump(@player_attributes,file)
+            end
+            File.open("#{@user_name}_npc.save", "wb") do |file|
+                Marshal.dump(@npc_attributes,file)
+            end
+            File.open("#{@user_name}_inventory.save", "wb") do |file|
+                Marshal.dump(@inventory,file)
             end
         rescue
             return true
@@ -55,21 +60,32 @@ class Player
 
     # Load player status from disk
     def load()
+        return true if File.file?("#{@user_name}_game.save") == false
+        return true if File.file?("#{@user_name}_player.save") == false
+        return true if File.file?("#{@user_name}_npc.save") == false
+        return true if File.file?("#{@user_name}_inventory.save") == false
+        
         begin
-            File.open(@user_name, "r") do |file|
+            File.open("#{@user_name}_game.save", "rb") do |file|
                 @x = file.gets.chomp.to_i
                 @y = file.gets.chomp.to_i
                 @z = file.gets.chomp.to_i
-                @health = file.gets.chomp.to_i
-                @lives = file.gets.chomp.to_i
-                @score = file.gets.chomp.to_i
                 @user_name = file.gets.chomp
-                @inventory = Array.new(Marshal.restore(file.gets.chomp))
-                @location_items = Array.new(Marshal.restore(file.gets.chomp))
-                @location_attributes = Array.new(Marshal.restore(file.gets.chomp))
-                @player_attributes = Array.new(Marshal.restore(file.gets.chomp))
+                @location_items = Array.new(Marshal.load(file.gets.chomp))
+                @location_attributes = Array.new(Marshal.load(file.gets.chomp))
+                @location_npcs = Array.new(Marshal.load(file.gets.chomp))
+                @npc = Array.new(Marshal.load(file.gets.chomp))
             end
-        rescue
+            File.open("#{@user_name}_player.save", "rb") do |file|
+                @player_attributes = Marshal.load(file)
+            end
+            File.open("#{@user_name}_npc.save", "rb") do |file|
+                @npc_attributes = Marshal.load(file)
+            end
+            File.open("#{@user_name}_inventory.save", "rb") do |file|
+                @inventory = Marshal.load(file)
+            end
+        rescue 
             return true
         end
         return false
@@ -105,23 +121,21 @@ class Player
     # Show menu - returns "quit" if player chooses 'q'
     def show_menu(listing)
         while true
-            puts "\n What would you like to do?  <h>elp  <i>ventory  <p>layer status  <q>uit game".cyan
+            puts "\n What would you like to do?  <h>elp  <i>ventory  <p>layer attributes  <q>uit game".cyan
             listing.each {|x| puts "    #{x}"}
 
             input = STDIN.noecho(&:gets).chomp.downcase
 
             case input
 
-            when "p"
-                puts "\n Player status:".red
-                puts "    Lives: ".red + "#{@lives}"
-                puts "    Health: ".red + " #{@health}%"
-                puts "    Score: ".red + "#{@score} points"
-                puts "\n\n" 
-                next
-
             when "q"
                 return "quit"
+
+            when "p"
+                puts "\n Your attributes:".red
+                list_player_attributes.each do |x,y| puts "   #{x}: #{y}"
+                end 
+                next
 
             when "h"
                 puts "The Help Screen".yellow
@@ -129,10 +143,11 @@ class Player
 
             when "i"
                 puts "\n Your inventory:".red
-                list_inventory_items.each_with_index {|x,y| puts "    #{y+1}. #{x}"}
-                puts "\n\n"
+                list_inventory_items.each do |x,y| puts "   #{x}: #{y}"
+                end
                 next
             end
+
         puts "\n\n"
         return input
         end
@@ -142,76 +157,6 @@ class Player
     def next_location
         return "location_#{@x}_#{@y}_#{@z}"
     end 
-
-    # Add health to player
-    def add_health(health)
-        if @health < MAX_HEALTH
-            @health += health
-            return false
-        else
-            return true
-        end
-    end
-
-    # Remove health from player
-    def remove_health(health)
-        if @health > 0
-            @health -= health
-            return false
-        else
-            return true
-        end
-    end
-
-    # Get health
-    def get_health()
-        return @health
-    end
-
-    # Set health
-    def set_health(health)
-        if health >= 0 and health <= MAX_HEALTH 
-            @health = health
-            return false
-        else
-            return true
-        end
-    end
-
-    # Add lives to player
-    def add_lives(lives)
-        if @lives < MAX_LIVES
-            @lives += lives
-            return false
-        else
-            return true
-        end
-    end
-
-    # Remove lives from player
-    def remove_lives(lives)
-        if @lives > 0
-            @lives -= lives
-            return false
-        else
-            return true
-        end
-    end
-
-    # Get number of lives
-    def get_lives()
-        return @lives
-    end
-
-    # Set number of lives
-    def set_lives(lives)
-        if lives >= 0 and lives <= MAX_LIVES 
-            @lives = lives
-            return false
-        else
-            return true
-        end
-    end
 
     # Return current location
     def get_location()
@@ -289,31 +234,31 @@ class Player
         end
     end
 
-    # Add inventory
+    # Add player inventory
     def add_inventory_item(item)
-        @inventory = Array.new if @inventory == nil
-        return true if @inventory.count >= MAX_INVENTORY 
-        @inventory.push(item)
-        @inventory = @inventory.uniq
+        @inventory = Hash.new if @inventory == nil
+        return true if @inventory.keys.count >= MAX_INVENTORY
+        @inventory[item] = @inventory[item] + 1 if check_inventory_item(item)
+        @inventory[item] = 1
         return false
     end
 
-    # List inventory
+    # List player inventory
     def list_inventory_items()
         return @inventory
     end
 
-    # Check inventory for an item
+    # Check player inventory for an item
     def check_inventory_item(item)
         begin
-            return true if @inventory.include?(item)
+            return true if @inventory.key?(item)
         rescue
             return false
         end
         return 
     end
 
-    # Remove item from inventory
+    # Remove item from player inventory
     def remove_inventory_item(item)
         begin
             @inventory.delete(item)
@@ -323,33 +268,75 @@ class Player
         end
     end
 
-    # Add player attribute
-    def add_player_attribute(item)
-        @player_attributes = Array.new if @player_attributes == nil
-        @player_attributes.push(item)
-        @player_attributes = @player_attributes.uniq
+    # Get count of a player inventory item
+    def check_inventory_item_count(item)
+        begin
+            return @inventory.fetch(item) if @inventory.key?(item)
+        rescue
+            return 0
+        end
+        return 0
+    end
+
+    # Set player attribute
+    def set_player_attribute(item,value)
+        @player_attributes = Hash.new if @player_attributes == nil
+        @player_attributes.store(item,value)
         return false
     end
 
+    # Get attribute for player
+    def get_player_attribute(item)
+        begin
+            return @player_attributes.fetch(item)
+        rescue
+            return nil
+        end
+    end
+
     # List player attributes
-    def list_player_attributes()
+    def list_player_attributes
         return @player_attributes
     end
-
-    # Check player for attribute
-    def check_player_attribute(item)
-        begin
-            return true if @player_attributes.include?(item)
-        rescue
-            return false
-        end
-        return 
-    end
-
-    # Remove player attributes
+    
+    # Remove player attribute
     def remove_player_attribute(item)
         begin
             @player_attributes.delete(item)
+            return false
+        rescue
+            return true
+        end
+    end
+
+    # Set npc attribute
+    def set_npc_attribute(number,item,value)
+        return true if number > MAX_NPC 
+        @npc[number] = Hash.new if @npc[number] == nil
+        attributes = @npc[number]
+        attributes.store(item,value)
+        @npc[number] = attributes
+        return false
+    end
+
+    # Get attribute for npc
+    def get_npc_attribute(number,item)
+        return nil if @npc[number] == nil
+        begin
+            attributes = @npc[number]
+            return attributes.fetch(item)
+        rescue
+            return nil
+        end
+    end
+
+    # Remove npc attribute
+    def remove_npc_attribute(item)
+        return true if @npc[number] == nil
+        begin
+            attributes = @npc[number]
+            attributes.delete(item)
+            @npc[number] = attributes
             return false
         rescue
             return true
@@ -388,6 +375,28 @@ class Player
         return 
     end
 
+    # Add npc to a location
+    def add_location_npc(number)
+        @location_npcs[@x][@y][@z] = Array.new if @location_npcs[@x][@y][@z] == nil
+        @location_npcs[@x][@y][@z].push(number)
+        @location_npcs[@x][@y][@z] = @location_npcs[@x][@y][@z].uniq
+    end
+
+    # List npcs in a location
+    def list_location_npcs()
+        return @location_npcs[@x][@y][@z]
+    end
+
+    # Remove npc from location
+    def remove_location_npc(number)
+        begin
+            @location_npcs[@x][@y][@z].delete(number)
+            return false
+        rescue
+            return true
+        end
+    end
+
     # Add a location attribute
     def set_location_attribute(item,status)
         @location_attributes[@x][@y][@z] = Hash.new if @location_attributes[@x][@y][@z] == nil
@@ -399,55 +408,40 @@ class Player
         return @location_attributes[@x][@y][@z][item]
     end
 
+    # Remove a location attribute
+    def remove_location_attribute(item)
+         begin
+            @location_attributes[@x][@y][@z].delete(item)
+            return false
+        rescue
+            return true
+        end
+    end
+
     # List attributes for a location
     def list_location_attributes()
         return @location_attributes[@x][@y][@z]
     end
 
-    # Pick Up Item
+    # Pick up item
     def pickup_item(item)
         remove_location_item(item)
         return add_inventory_item(item)
     end
 
-    # Drop Item
+    # Drop item
     def drop_item(item)
         remove_inventory_item(item)
         add_location_item(item)
     end
 
-    # Set Username
+    # Set username
     def set_user_name(name)
         @user_name = name
     end
 
-    # Get Username
-    def get_user_name()
-        return @user_name
-    end
-
-    # Set Score
-    def set_score(score)
-        @score = score
-    end
-
-    # Get Score
-    def get_score(score)
-        return @score = score
-    end
-
-    # Add to score
-    def add_score(score)
-         @score += score
-    end
-
-    # Remove from score
-    def remove_score(score)
-        if @score > 0
-            @score -= score
-            return false
-        else
-            return true
-        end
+    # Get username
+    def get_user_name
+       return @user_name
     end
 end
