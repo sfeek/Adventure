@@ -292,6 +292,12 @@ class Locations
         @game.set_player_attribute("Lives",@game.get_player_attribute("Lives") - 1)
 
         @game.screen "You have fallen off the map into the Great Blue Void and lost your life! You are now starting over and have #{@game.get_player_attribute("Lives")} lives left."
+        
+        return player_reset
+    end
+
+    # Reset the player
+    def player_reset
         @game.set_location(0,0,0)
         @game.set_location_attribute("Light Switch","OFF")
         @game.add_location_item("Treasure from Safe")
@@ -313,12 +319,10 @@ class Locations
         @game.set_npc_attribute(0,"Name","Angry Troll")
         @game.set_npc_attribute(0,"Max Hit", 30)
 
-        @game.set_player_attribute("Lives",3)
         @game.set_player_attribute("Health",100)
         @game.set_player_attribute("Max Hit",40)
         
-        return "Exit_Game" if @game.get_player_attribute("Lives") == 0
-
+        return "Exit_Game" if @game.get_player_attribute("Lives") < 0
         return @game.next_location
     end
 
@@ -342,8 +346,7 @@ class Locations
                 when "w"
                     @game.move_west
                     return @game.next_location
-
-                
+               
                 end
             end
         else
@@ -532,7 +535,7 @@ class Locations
                         @game.set_player_attribute("Health",100)
                         @game.set_player_attribute("Lives",@game.get_player_attribute("Lives") - 1)
                         @game.screen "You have died! You have #{@game.get_player_attribute("Lives")} left."
-                        return "Exit_Game" if @game.get_player_attribute("Lives") == 0
+                        return player_reset
                     end
 
                     case @game.show_menu ["1. Leave the cave", "2. Strike the troll"]
