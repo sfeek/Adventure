@@ -130,7 +130,11 @@ class Game
             case input
 
             when "q"
-                return "quit"
+                save
+                # Exit the game
+                puts "\nYour progress has been saved."
+                puts "You have left the game!"
+                exit
 
             when "p"
                 puts "\n Your attributes:".red
