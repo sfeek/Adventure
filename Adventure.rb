@@ -28,6 +28,7 @@ class Game
         @player_attributes = Hash.new()
         @npc_attributes = Hash.new()
         @inventory = Hash.new()
+        Random.new_seed
     end
 
     # Save player status to disk
@@ -96,7 +97,7 @@ class Game
         wrap_len = 78
         start_pos = wrap_len
         if str.length <= start_pos
-            puts "\n" + str.green + "\n"
+            puts "\n" + str.white + "\n"
             return
         end
         while start_pos < str.length
@@ -104,7 +105,7 @@ class Game
             str.insert(sp, '|')
             start_pos = sp + wrap_len + 1
         end
-        puts "\n" + str.gsub!(/\|[\s]/, "\n").green
+        puts "\n" + str.gsub!(/\|[\s]/, "\n").white
     end
 
     # Toggle an item
@@ -122,7 +123,7 @@ class Game
     def show_menu(listing)
         while true
             puts "\n What would you like to do?  <h>elp  <i>ventory  <p>layer attributes  <q>uit game".cyan
-            listing.each {|x| puts "    #{x}"}
+            listing.each {|x| puts "    #{x}".green}
 
             input = STDIN.noecho(&:gets).chomp.downcase
 
