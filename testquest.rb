@@ -530,9 +530,9 @@ class Locations
 
                         @game.screen "The troll still has #{@game.get_npc_attribute(0,"Health")}% health left." if @game.get_npc_attribute(0,"Health") > 0
                         @game.screen "You still have #{@game.get_player_attribute("Health")}% health left." if @game.get_player_attribute("Health") > 0
-                        if no_dagger == false
+                        if dagger == false
                             @game.screen "Maybe if you had a weapon you could defend yourself better!" 
-                            no_dagger = true
+                            dagger = true
                         end
 
                         if @game.get_npc_attribute(0,"Health") <= 0
